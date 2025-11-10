@@ -11,8 +11,7 @@
                 <label for="email">Email:</label>
                 <input type="email" id="email" name="email" required>
             </p>
-            <button type="submit" class="btn">Tambah Data</button>
+            <button type="submit" class="btn btn-success">Tambah Data</button>
+            <a href="<?= BASEURL; ?>/user" class="btn btn-secondary ms-2">Kembali ke Daftar</a>
         </form>
-        
-        <a href="<?= BASEURL; ?>/user" class="btn">Kembali ke Daftar</a>
     </div>
