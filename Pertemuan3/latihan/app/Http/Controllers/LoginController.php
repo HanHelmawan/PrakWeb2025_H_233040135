@@ -24,13 +24,13 @@ class LoginController extends Controller
         if (Auth::attempt($request->only('email', 'password'))) {
             // Login berhasil
             $request->session()->regenerate();
-            return redirect()->intended('/posts');
+            return redirect()->intended('/posts')->with('success', 'Login berhasil! Selamat datang.');
         }
 
         // Login gagal
         return back()->withErrors([
-            'email' => 'Email atau password salah.',
-        ]);
+            'email' => 'Login gagal!',
+        ])->onlyInput('email');
     }
 
     public function logout(Request $request)

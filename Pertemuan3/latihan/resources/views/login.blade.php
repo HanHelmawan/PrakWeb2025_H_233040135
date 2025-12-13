@@ -2,6 +2,21 @@
     <x-slot:title>Login</x-slot:title>
     <div class="max-w-md mx-auto mt-10 bg-white p-8 rounded shadow">
         <h1 class="text-2xl font-bold mb-6">Login</h1>
+
+        @if(session()->has('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        @endif
+
+        @if(session()->has('loginError'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('loginError') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        @endif
+
         <form method="POST" action="{{ route('login') }}">
             @csrf
             <div class="mb-4">
@@ -16,9 +31,4 @@
         </form>
     </div>
 
-    @if(session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-    </div>
-@endif
 </x-layout>

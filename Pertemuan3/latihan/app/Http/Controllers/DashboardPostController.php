@@ -7,6 +7,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Gate;
 
 class DashboardPostController extends Controller
 {
@@ -40,68 +41,90 @@ class DashboardPostController extends Controller
         return view('dashboard.create', compact('categories'));
     }
 
-    public function store(Request $request)
+public function store(Request $request)
+{
+    $validatedData = $request->validate([
+    'title' => 'required|max:255',
+    'slug' => 'required|unique:posts',
+    'category_id' => 'required',
+    'body' => 'required'
+    ]);
+
+    $validatedData['user_id'] = auth()->user()->id;
+    // excerpt diambil 200 karakter dari body
+    $validatedData['excerpt'] = Str::limit(strip_tags($request->body), 200);
+
+    Post::create($validatedData);
+
+    return redirect('/dashboard/posts')->with('success', 'New post has been added!');
+}
+
+public function edit(Post $post)
+        {
+            // Mengecek apakah user berhak mengedit (Tugas Praktek 3: Policy)
+            Gate::authorize('update', $post);
+
+            return view('dashboard.edit', [
+            'post' => $post,
+            'categories' => Category::all()
+            ]);
+        }
+
+        public function update(Request $request, Post $post)
     {
-        // // Generate slug dari title
-        // $slug = Str::slug($request->title);
+            // Mengecek policy sebelum update (Tugas Praktek 3)
+            Gate::authorize('update', $post);
 
-        // // Pastikan slug unique - jika sudah ada, tambahkan angka di belakang
-        // $originalSlug = $slug;
-        // $count = 1;
-        // while (Post::where('slug', $slug)->existed()) {
-        //     $slug = $originalSlug . '-' . $count;
-        //     $count++;
-        // }
+            // Validasi Rules
+            $rules = [
+                'title' => 'required|max:255',
+                'category_id' => 'required',
+                'body' => 'required'
+            ];
 
-        // Handle file upload
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            // Store file di storage/app/public/post-images
-            // Method store() akan generate nama file unik otomatis
-            $imagePath = $request->file('image')->store('post-images', 'public');
+            // Cek Slug: jika slug berubah, maka harus validasi unique.
+            // Jika tidak berubah, abaikan unique check.
+            if ($request->slug != $post->slug) {
+            $rules['slug'] = 'required|unique:posts';
+            }
+
+            $validatedData = $request->validate($rules);
+
+            // Handle Image Update
+            if ($request->file('image')) {
+                // Hapus gambar lama jika ada
+                    if ($request->oldImage) {
+                    Storage::delete($request->oldImage);
+                }
+                // Simpan gambar baru
+                $validatedData['image'] = $request->file('image')->store('post-images');
+            }
+
+            // Tambahkan data excerpt dan user_id
+            $validatedData['user_id'] = auth()->user()->id;
+            $validatedData['excerpt'] = Str::limit(strip_tags($request->body), 200);
+
+            // Update Data
+            Post::where('id', $post->id)
+                ->update($validatedData);
+
+            return redirect('/dashboard/posts')->with('success', 'Post has been updated!');
         }
-        
 
-        // Create post
-        Post::create([
-            'title' => $request->title,
-            'slug' => $slug,
-            'category_id' => $request->category_id,
-            'excerpt' => $request->excerpt,
-            'body' => $request->body,
-            'image' => $imagePath, // Simpan path gambar (contoh: post-images/abc123.jpg)
-            'user_id' => auth()->user()->id,
-        ]);
 
-        return redirect()->route('dashboard.index')->with('success', 'Post created 
-        successfully!');
+        public function destroy(Post $post)
+        {
+            // Mengecek policy sebelum delete (Tugas Praktek 3)
+            Gate::authorize('delete', $post);
 
-        // Validasi input dengan custom messages
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|max:255',
-            'category_id' => 'required|exists:categories,id', // Memastikan ID ada di tabel categories
-            'excerpt' => 'required',
-            'body' => 'required',
-            // Aturan untuk Image: Opsional (nullable), harus gambar, format tertentu, max 2MB
-            'image' => 'nullable|image|mimes:jpg,png,jpg,gif|max:2048',
-        ],
-        [   // Custom message
-            'title.required' => 'Field Title wajib diisi',
-            'title.max' => 'Field Title tidak boleh lebih dari 255 karakter',
-            'category_id.required' => 'Field Category wajib dipilih',
-            'category_id.exists' => 'Category yang dipilih tidak valid',
-            'excerpt.required' => 'Field Excerpt wajib diisi',
-            'body.required' => 'Field Content wajib diisi',
-            'image.image' => 'File harus berupa gambar',
-            'image.mimes' => 'Format gambar harus jpeg, png, jpg, atau gif',
-            'image.max' => 'Ukuran gambar maksimal 2MB',
-        ]); 
+            // Hapus file gambar fisik jika ada
+            if ($post->image) {
+                Storage::delete($post->image);
+            }
 
-        // Jika validasi gagal, redirect kembali dengan error
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator) // Mengirimkan semua pesan error kembali
-                ->withInput();          // Mengirimkan semua data yang sudah diinput (old data)
+            // Hapus record dari database
+            Post::destroy($post->id);
+
+            return redirect('/dashboard/posts')->with('success', 'Post has been deleted!');
         }
-    }
 }

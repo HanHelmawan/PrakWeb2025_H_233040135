@@ -39,7 +39,7 @@ Route::get('/categories', [CategoryController::class, 'index']);
 // --- AUTHENTICATION ROUTES  ---
 Route::get('/login', [LoginController::class, 'showLoginForm'])->middleware('guest')->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware('guest');
-Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->middleware('guest')->name('register');
+Route::get('/register', [RegisterController::class, 'showRegisterForm'])->middleware('guest')->name('register');
 Route::post('/register', [RegisterController::class, 'register'])->middleware('guest');
 
 
