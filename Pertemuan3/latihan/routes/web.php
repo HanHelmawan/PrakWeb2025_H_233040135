@@ -46,7 +46,17 @@ Route::post('/register', [RegisterController::class, 'register'])->middleware('g
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // --- DASHBOARD ROUTES  ---
-Route::get('/dashboard', [DashboardPostController::class, 'index'])->middleware('auth', 'verified')->name('dashboard.index');
-Route::get('/dashboard/create', [DashboardPostController::class, 'create'])->middleware('auth', 'verified')->name('dashboard.create');
-Route::post('/dashboard', [DashboardPostController::class, 'store'])->middleware('auth', 'verified')->name('dashboard.store');
-Route::get('/dashboard/{post:slug}', [DashboardPostController::class, 'show'])->middleware('auth', 'verified')->name('dashboard.show');
+// 1. Route Check Slug (WAJIB DITARUH DI SINI, sebelum route yang ada {post:slug})
+Route::get('/dashboard/posts/checkSlug', [DashboardPostController::class, 'checkSlug'])->middleware('auth', 'verified');
+
+// 2. Daftar Route Dashboard Post Anda (Manual)
+Route::get('/dashboard/posts', [DashboardPostController::class, 'index'])->middleware('auth', 'verified')->name('dashboard.index');
+Route::get('/dashboard/posts/create', [DashboardPostController::class, 'create'])->middleware('auth', 'verified')->name('dashboard.create');
+Route::post('/dashboard/posts', [DashboardPostController::class, 'store'])->middleware('auth', 'verified')->name('dashboard.store');
+
+// Route yang pakai parameter {post:slug} harus di bawah checkSlug
+Route::get('/dashboard/posts/{post:slug}', [DashboardPostController::class, 'show'])->middleware('auth', 'verified')->name('dashboard.show');
+Route::get('/dashboard/posts/{post:slug}/edit', [DashboardPostController::class, 'edit'])->middleware('auth', 'verified')->name('dashboard.edit');
+Route::put('/dashboard/posts/{post:slug}', [DashboardPostController::class, 'update'])->middleware('auth', 'verified')->name('dashboard.update');
+Route::delete('/dashboard/posts/{post:slug}', [DashboardPostController::class, 'destroy'])->middleware('auth', 'verified')->name('dashboard.destroy');
+

@@ -44,4 +44,6 @@ class Post extends Model
             $query->where('username', $author))
         );
     }
+
+    
 }

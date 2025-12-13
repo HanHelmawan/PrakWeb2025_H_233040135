@@ -47,12 +47,18 @@ public function store(Request $request)
     'title' => 'required|max:255',
     'slug' => 'required|unique:posts',
     'category_id' => 'required',
-    'body' => 'required'
+    'body' => 'required',
+    'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
     ]);
 
     $validatedData['user_id'] = auth()->user()->id;
     // excerpt diambil 200 karakter dari body
     $validatedData['excerpt'] = Str::limit(strip_tags($request->body), 200);
+
+    // Proses upload gambar jika ada
+    if ($request->file('image')) {
+        $validatedData['image'] = $request->file('image')->store('post-images', 'public');
+    }
 
     Post::create($validatedData);
 
@@ -126,5 +132,11 @@ public function edit(Post $post)
             Post::destroy($post->id);
 
             return redirect('/dashboard/posts')->with('success', 'Post has been deleted!');
+        }
+
+        public function checkSlug(Request $request)
+        {
+            $slug = \Illuminate\Support\Str::slug($request->title);
+            return response()->json(['slug' => $slug]);
         }
 }
