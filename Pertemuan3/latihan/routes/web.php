@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardPostController;
 use App\Http\Controllers\LoginController; 
 use App\Http\Controllers\RegisterController; 
 use Illuminate\Support\Facades\Route;
+use App\Models\Post;
 
 Route::get('/', function () {
     return view('welcome');
@@ -46,6 +47,14 @@ Route::post('/register', [RegisterController::class, 'register'])->middleware('g
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // --- DASHBOARD ROUTES  ---
+
+// --- DASHBOARD MAIN PAGE ---
+Route::get('/dashboard', function () {
+    // Ambil semua post milik user yang sedang login
+    $posts = Post::where('user_id', auth()->id())->with(['category'])->latest()->get();
+    return view('dashboard.index', compact('posts'));
+})->middleware('auth', 'verified')->name('dashboard.main');
+
 // 1. Route Check Slug (WAJIB DITARUH DI SINI, sebelum route yang ada {post:slug})
 Route::get('/dashboard/posts/checkSlug', [DashboardPostController::class, 'checkSlug'])->middleware('auth', 'verified');
 
